@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"><title>Speed Racer 2D</title>
+<style>
+*{box-sizing:border-box}body{margin:0;padding:10px;background:#102030;color:white;text-align:center;font-family:Arial;min-height:100dvh;display:flex;flex-direction:column;align-items:center;touch-action:manipulation}h1{font-size:clamp(22px,6vw,32px);margin:8px}#info{margin:4px 0 10px;font-weight:bold}
+canvas{width:min(94vw,380px,62dvh);height:auto;max-height:65dvh;display:block;background:#287c3c;border:3px solid white;border-radius:10px;touch-action:none}
+.controls{display:flex;gap:8px;width:min(94vw,380px);margin:12px auto 0}button{flex:1;min-height:56px;padding:8px 4px;font-size:17px;font-weight:bold;border:0;border-radius:13px;background:#ffda45;color:#1d2730;touch-action:manipulation;user-select:none;-webkit-user-select:none}button:active{background:#fff0a6}#restart{width:min(94vw,380px);margin-top:8px;min-height:44px;font-size:16px}.note{font-size:12px;color:#d7e7ee;margin:8px}
+</style></head><body><h1>🏁 SPEED RACER 2D</h1><div id="info">Distance: 0 m · Boost ready</div>
+<canvas id="game" width="380" height="600"></canvas>
+<div class="controls"><button id="left">⬅ LEFT</button><button id="boost">⚡ BOOST</button><button id="right">RIGHT ➡</button></div><button id="restart">↻ RESTART</button><div class="note">Steer around traffic and tap BOOST for a burst of speed.</div>
+<script>
+const canvas=document.getElementById('game'),ctx=canvas.getContext('2d');let lane=1,traffic=[],distance=0,dead=false,frame=0,boostFrames=0,last=0;
+const xs=[62,171,280];
+function reset(){lane=1;traffic=[];distance=0;dead=false;frame=0;boostFrames=0;document.getElementById('info').textContent='Distance: 0 m · Boost ready'}
+function steer(d){if(!dead)lane=Math.max(0,Math.min(2,lane+d))}
+function boost(){if(!dead&&boostFrames===0)boostFrames=90}
+document.getElementById('left').addEventListener('pointerdown',e=>{e.preventDefault();steer(-1)});
+document.getElementById('right').addEventListener('pointerdown',e=>{e.preventDefault();steer(1)});
+document.getElementById('boost').addEventListener('pointerdown',e=>{e.preventDefault();boost()});
+document.getElementById('restart').addEventListener('click',reset);
+addEventListener('keydown',e=>{if(e.key==='ArrowLeft')steer(-1);if(e.key==='ArrowRight')steer(1);if(e.code==='Space'){e.preventDefault();boost()}});
+function drawCar(x,y,color){ctx.fillStyle=color;ctx.fillRect(x,y,38,62);ctx.fillStyle='#e8f7ff';ctx.fillRect(x+6,y+8,26,15);ctx.fillStyle='#111';ctx.fillRect(x+3,y+46,8,10);ctx.fillRect(x+27,y+46,8,10);ctx.fillStyle='#fff';ctx.fillRect(x+5,y+2,8,4);ctx.fillRect(x+25,y+2,8,4)}
+function loop(t){requestAnimationFrame(loop);if(t-last<16)return;last=t;ctx.clearRect(0,0,380,600);ctx.fillStyle='#287c3c';ctx.fillRect(0,0,380,600);ctx.fillStyle='#555';ctx.fillRect(35,0,310,600);
+ctx.strokeStyle='white';ctx.lineWidth=5;ctx.setLineDash([38,28]);ctx.lineDashOffset=-(frame%66);ctx.beginPath();ctx.moveTo(145,0);ctx.lineTo(145,600);ctx.moveTo(235,0);ctx.lineTo(235,600);ctx.stroke();ctx.setLineDash([]);
+const speed=boostFrames>0?7:3;
+if(!dead){frame++;if(frame%48===0)traffic.push({lane:Math.floor(Math.random()*3),y:-70,s:speed+Math.random()});traffic.forEach(v=>v.y+=v.s);traffic=traffic.filter(v=>v.y<620);distance+=speed;if(boostFrames>0)boostFrames--;for(const v of traffic)if(v.lane===lane&&v.y<492&&v.y+62>430)dead=true;document.getElementById('info').textContent='Distance: '+Math.floor(distance)+' m · '+(boostFrames>0?'⚡ BOOST ACTIVE':'Boost '+(boostFrames===0?'ready':'active'))}
+traffic.forEach(v=>drawCar(xs[v.lane],v.y,'#ff514d'));if(boostFrames>0){ctx.fillStyle='#ffe45e';ctx.fillRect(xs[lane]+12,500,14,28)}drawCar(xs[lane],430,'#ffda45');
+if(dead){ctx.fillStyle='rgba(0,0,0,.72)';ctx.fillRect(35,225,310,120);ctx.fillStyle='white';ctx.textAlign='center';ctx.font='bold 28px Arial';ctx.fillText('RACE OVER',190,270);ctx.font='17px Arial';ctx.fillText('Tap RESTART to race again',190,302);ctx.textAlign='start'}
+}reset();loop(0);
+</script></body></html>
